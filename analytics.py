@@ -230,81 +230,64 @@ for dataframe, name in zip(all_dataframes, all_dataframe_names):
     print(dataframe.isnull().sum())
     print("\n")
 
+for dataframe, name in zip(all_dataframes, all_dataframe_names):
     print(f"Dataframe Info for {name}:\n")
     print(dataframe.info())
     print("\n")
 
 # Rename columns
-new_column_names = ['Country', 'Currency'] + [f'Year_{year}' for year in range(1994, 2020)] + ['Explanation of data', 'Comments', 'Sources of data']
-local_currency_df.columns = new_column_names
+for dataframe, name in zip(all_dataframes, all_dataframe_names):
+    # Create a dictionary to map old column names to new ones
+    column_mapping = {
+        'Country': 'Country',
+        'Currency': 'Currency',
+        'Explanation of data': 'Explanation',
+        'Comments': 'Comments',
+        'Sources of data for last five years, beginning with most recent': 'Sources of data'
+    }
 
-# Convert numeric columns to appropriate data types
-numeric_columns = new_column_names[2:-3]  # Columns from Year_1994 to Year_2019
-local_currency_df[numeric_columns] = local_currency_df[numeric_columns].apply(pd.to_numeric, errors='coerce')
+    # Rename columns using the dictionary
+    dataframe.rename(columns=column_mapping, inplace=True)
 
-# Rename columns
-new_column_names = ['Country'] + [f'Year_{year}' for year in range(2001, 2020)] + ['Explanation of data', 'Comments', 'Sources of data']
-current_usd_df.columns = new_column_names
+    print(f"Columns Renamed for {name}:\n")
+    print(dataframe.head())
+    print("\n")
 
-# Convert numeric columns to appropriate data types
-numeric_columns = new_column_names[1:-3]  # Columns from Year_2001 to Year_2019
-current_usd_df[numeric_columns] = current_usd_df[numeric_columns].apply(pd.to_numeric, errors='coerce')
-
-# Rename columns
-new_column_names = ['Country'] + [f'Year_{year}' for year in range(2001, 2020)] + ['Explanation of data', 'Comments', 'Sources of data']
-constant_usd_df.columns = new_column_names
-
-# Convert numeric columns to appropriate data types
-numeric_columns = new_column_names[1:-3]  # Columns from Year_2001 to Year_2019
-constant_usd_df[numeric_columns] = constant_usd_df[numeric_columns].apply(pd.to_numeric, errors='coerce')
-
-# Check the structure and data types after cleaning
-print("Cleaned and Renamed Local Currency DataFrame:")
-print(local_currency_df.head())
-print("\nData Types and Info for Cleaned Local Currency DataFrame:")
-print(local_currency_df.info())
-
-# Check the structure and data types after cleaning
-print("Cleaned and Renamed Current USD DataFrame:")
-print(current_usd_df.head())
-print("\nData Types and Info for Cleaned Current USD DataFrame:")
-print(current_usd_df.info())
-
-# Check the structure and data types after cleaning
-print("Cleaned and Renamed Constant USD DataFrame:")
-print(current_usd_df.head())
-print("\nData Types and Info for Cleaned Constant USD DataFrame:")
-print(current_usd_df.info())
+# Iterate through all dataframes and their names
+for dataframe, name in zip(all_dataframes, all_dataframe_names):
+    print(f"Converting Columns to Numeric for {name}:\n")
+    
+    # Get the columns that are not of type object
+    year_columns = [col for col in dataframe.columns if col not in ['Country', 'Currency', 'Explanation of data', 'Comments', 'Sources of data']]
+    
+    # Convert the selected columns to numeric data type
+    dataframe[year_columns] = dataframe[year_columns].apply(pd.to_numeric, errors='coerce')
+    
+    # Print information about the dataframe after the conversion
+    print(f"Dataframe Info for {name}:\n")
+    print(dataframe.info())
+    print("\n")
 
 # Exploratory Data Analysis (EDA) commences
 
 import matplotlib.pyplot as plt
-import numpy as np
 
-# Choose a country for analysis (e.g., Albania)
-country = 'India'
+# Define the desired columns to plot
+columns_to_plot = ['2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019']
 
-# Filter the data for the selected country
-country_data_local = local_currency_df[local_currency_df['Country'] == country]
-country_data_current_usd = local_currency_df[local_currency_df['Country'] == country]
-country_data_constant_usd = local_currency_df[local_currency_df['Country'] == country]
+# Filter data for India and select only the desired columns
+india_data = local_currency_exports_df[local_currency_exports_df['Country'] == 'India'][columns_to_plot]
 
-# Extract years and military expenditure values for the selected country
-years = range(1994, 2020)
-military_expenditure_local = np.nan_to_num(country_data_local.iloc[:, 2:29].values.flatten(), nan=0)
-military_expenditure_current_usd = np.nan_to_num(country_data_current_usd.values.flatten()[1:], nan=0)
-military_expenditure_constant_usd = np.nan_to_num(country_data_constant_usd.values.flatten()[1:], nan=0)
+# Transpose the data for plotting
+india_data = india_data.T
 
-# Create a time series plot for military expenditure
+# Create a line plot for India's data
 plt.figure(figsize=(12, 6))
-plt.plot(years, military_expenditure_local, label='Local Currency', marker='o')
-plt.plot(years, military_expenditure_current_usd, label='Current USD', marker='o')
-plt.plot(years, military_expenditure_constant_usd, label='Constant USD', marker='o')
-plt.title(f'Military Expenditure Over Time for {country}')
+plt.plot(india_data, marker='o', linestyle='-')
+plt.title('India Exports Over the Years (Local Currency)')
 plt.xlabel('Year')
-plt.ylabel('Military Expenditure (Million USD)')
-plt.xticks(years, rotation=45)
+plt.ylabel('Exports (Local Currency)')
+plt.legend(['India'])
 plt.grid(True)
-plt.legend()
 plt.tight_layout()
 plt.show()
