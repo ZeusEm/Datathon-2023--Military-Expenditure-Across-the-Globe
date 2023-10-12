@@ -38,35 +38,26 @@ for worksheet in desired_worksheets:
     else:
         print(f"Worksheet '{worksheet}' not found in the Excel file.")
 
-# Check the structure of the DataFrames
-print("Local Currency DataFrame:")
-print(local_currency_df.head())
+# List of dataframes and their corresponding names
+dataframes = [local_currency_df, current_usd_df, constant_usd_df]
 
-print("\nCurrent USD DataFrame:")
-print(current_usd_df.head())
-
-print("\nConstant USD DataFrame:")
-print(constant_usd_df.head())
+for dataframe, name in zip(dataframes, desired_worksheets):
+    print(f"{name} DataFrame:")
+    print(dataframe.head())
+    print()
 
 # Check for missing values in each DataFrame
-print("Missing Values in Local Currency DataFrame:")
-print(local_currency_df.isnull().sum())
-
-print("\nMissing Values in Current USD DataFrame:")
-print(current_usd_df.isnull().sum())
-
-print("\nMissing Values in Constant USD DataFrame:")
-print(constant_usd_df.isnull().sum())
+for dataframe, name in zip(dataframes, desired_worksheets):
+    print(f"{name} DataFrame - Missing Values:")
+    missing_values = dataframe.isnull().sum()
+    print(missing_values)
+    print()
 
 # Check for data types and general information about each DataFrame
-print("\nData Types and Info for Local Currency DataFrame:")
-print(local_currency_df.info())
-
-print("\nData Types and Info for Current USD DataFrame:")
-print(current_usd_df.info())
-
-print("\nData Types and Info for Constant USD DataFrame:")
-print(constant_usd_df.info())
+for dataframe, name in zip(dataframes, desired_worksheets):
+    print(f"{name} DataFrame - Info:")
+    print(dataframe.info())
+    print()
 
 """
 Based on the output, it appears that there are multiple issues with the data in the 'Local Currency' worksheet:
@@ -272,22 +263,28 @@ for dataframe, name in zip(all_dataframes, all_dataframe_names):
 
 import matplotlib.pyplot as plt
 
-# Define the desired columns to plot
-columns_to_plot = ['2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019']
+# Define the specific country
+country_name = "Albania"
 
-# Filter data for India and select only the desired columns
-india_data = local_currency_exports_df[local_currency_exports_df['Country'] == 'India'][columns_to_plot]
+# Years for the data
+years = constant_usd_exports_df.columns[1:-3]  # Exclude Explanation, Comments, and Sources of data
 
-# Transpose the data for plotting
-india_data = india_data.T
+# Data for the specific country
+albania_exports = constant_usd_exports_df.loc[constant_usd_exports_df['Country'] == country_name].iloc[0, 1:-3]
+albania_licences = constant_usd_licences_df.loc[constant_usd_licences_df['Country'] == country_name].iloc[0, 1:-3]
 
-# Create a line plot for India's data
-plt.figure(figsize=(12, 6))
-plt.plot(india_data, marker='o', linestyle='-')
-plt.title('India Exports Over the Years (Local Currency)')
-plt.xlabel('Year')
-plt.ylabel('Exports (Local Currency)')
-plt.legend(['India'])
-plt.grid(True)
-plt.tight_layout()
+plt.figure(figsize=(10, 6))
+
+# Plot Constant USD Exports
+plt.plot(years, albania_exports, marker='o', linestyle='-', label="Constant USD Exports")
+
+# Plot Constant USD Licences
+plt.plot(years, albania_licences, marker='o', linestyle='-', label="Constant USD Licences")
+
+plt.title(f"{country_name} - Constant USD Exports and Licences Over the Years")
+plt.xlabel("Year")
+plt.ylabel("Value (Constant USD)")
+plt.grid()
+plt.xticks(rotation=45)
+plt.legend()
 plt.show()
