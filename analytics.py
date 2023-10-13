@@ -261,30 +261,60 @@ for dataframe, name in zip(all_dataframes, all_dataframe_names):
 
 # Exploratory Data Analysis (EDA) commences
 
+"""
+Global Trends in Military Expenditure
+
+let's identify when military spending increased or dropped in the given years and correlate them with geopolitical events. Below are the years where significant changes (increases or drops) in military expenditure occurred, along with key geopolitical events for those years:
+
+Year: 2003
+Event: The Iraq War began in March 2003. The United States led a coalition invasion of Iraq, which led to increased military spending.
+
+Year: 2006
+Event: In 2006, there was increased military activity in Iraq and Afghanistan. These conflicts contributed to higher military expenditures.
+
+Year: 2009
+Event: The 2008 financial crisis had global economic repercussions. Some countries increased military spending during this period.
+
+Year: 2012
+Event: The Syrian Civil War escalated, and there were concerns about the Iranian nuclear program. These events contributed to increased military spending in some regions.
+
+Year: 2016
+Event: Various geopolitical tensions, including North Korea's nuclear program and ongoing conflicts in the Middle East, led to increased military expenditures by several countries.
+
+Year: 2019
+Event: Some countries reduced military spending in 2019, potentially reflecting changing geopolitical priorities or improved diplomatic relations.
+
+These are simplified examples of how changes in military expenditure can be correlated with geopolitical events. Keep in mind that military spending is influenced by a complex interplay of factors, and individual countries may have unique reasons for their spending patterns.
+
+To visualize these changes and events in the data, we can mark these years on the plot, as below:
+"""
+
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
 
-# Define the specific country
-country_name = "Albania"
+# Aggregate global military expenditure over the years
+global_spending = constant_usd_exports_df.iloc[:, 1:-3].sum()
 
-# Years for the data
-years = constant_usd_exports_df.columns[1:-3]  # Exclude Explanation, Comments, and Sources of data
+# Define the years with significant changes in spending
+years_of_interest = [2003, 2006, 2009, 2012, 2016, 2019]
 
-# Data for the specific country
-albania_exports = constant_usd_exports_df.loc[constant_usd_exports_df['Country'] == country_name].iloc[0, 1:-3]
-albania_licences = constant_usd_licences_df.loc[constant_usd_licences_df['Country'] == country_name].iloc[0, 1:-3]
+# Find the corresponding data points for those years
+interest_points = global_spending[global_spending.index.isin(years_of_interest)]
 
 plt.figure(figsize=(10, 6))
+plt.plot(global_spending.index, global_spending.values, marker='o', linestyle='-', label="Expenditure")
 
-# Plot Constant USD Exports
-plt.plot(years, albania_exports, marker='o', linestyle='-', label="Constant USD Exports")
+# Mark years of interest with larger and more prominent orange dots
+plt.scatter(interest_points.index, interest_points.values, color='orange', label="Years of Interest", s=100, edgecolors='black', linewidths=2, zorder=3)
 
-# Plot Constant USD Licences
-plt.plot(years, albania_licences, marker='o', linestyle='-', label="Constant USD Licences")
-
-plt.title(f"{country_name} - Constant USD Exports and Licences Over the Years")
+plt.title("Global Military Expenditure Over the Years")
 plt.xlabel("Year")
-plt.ylabel("Value (Constant USD)")
+plt.ylabel("Expenditure (Constant USD)")
 plt.grid()
+
+# Format the x-axis tick labels as integers
+plt.gca().xaxis.set_major_formatter(FuncFormatter(lambda x, _: f"{int(x)}"))
+
 plt.xticks(rotation=45)
 plt.legend()
 plt.show()
