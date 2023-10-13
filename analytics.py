@@ -318,3 +318,69 @@ plt.gca().xaxis.set_major_formatter(FuncFormatter(lambda x, _: f"{int(x)}"))
 plt.xticks(rotation=45)
 plt.legend()
 plt.show()
+
+#pip install geopandas
+
+import geopandas as gpd
+import matplotlib.pyplot as plt
+
+# Load the world shapefile using the naturalearth_cities dataset
+world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
+
+# Specify the aspect ratio
+fig, ax = plt.subplots(subplot_kw={'aspect': 1.0})
+
+# Define regions based on geographical proximity
+regions = {
+    'Europe': ['Albania', 'Austria', 'Belgium', 'Bosnia and Herzegovina', 'Bulgaria', 'Croatia', 'Cyprus',
+               'Czechia', 'Denmark', 'Estonia', 'Finland', 'France', 'Germany', 'Greece', 'Hungary', 'Ireland',
+               'Italy', 'Latvia', 'Lithuania', 'Luxembourg', 'Malta', 'Montenegro', 'North Macedonia', 'The Netherlands',
+               'Norway', 'Poland', 'Portugal', 'Romania', 'Serbia', 'Slovakia', 'Slovenia', 'Spain', 'Sweden', 'Switzerland',
+               'UK', 'Turkey', 'Russia', 'Ukraine'],
+
+    'Asia': ['India', 'Israel', 'Korea, South', 'Taiwan', 'Pakistan'],
+
+    'Oceania': ['Australia'],
+
+    'North America': ['Canada', 'USA'],
+
+    'South America': ['Brazil'],
+}
+
+# Initialize the military expenditure data dictionary
+military_expenditure_data = {}
+
+constant_usd_exports_df.fillna(10, inplace=True)
+
+# Add countries to their respective regions in the military_expenditure_data dictionary
+for region, countries in regions.items():
+    military_expenditure_data[region] = list(countries)
+
+# Iterate through regions and calculate total expenditure for each region
+for region, countries in regions.items():
+    # Filter the data for countries in the region and fill NaN values with zeros
+    region_data = constant_usd_exports_df[constant_usd_exports_df['Country'].isin(countries)]
+    region_data = region_data.iloc[:, 1:-3].fillna(0)
+    
+    # Calculate the total expenditure for the region
+    total_expenditure = region_data.sum().sum()
+    military_expenditure_data[region] = total_expenditure
+
+# Manually assign 'Industry' to zero expenditure
+military_expenditure_data['Industry'] = 0
+
+# Add countries to their respective regions in the world DataFrame
+world['Region'] = world['name'].map({country: region for region, countries in regions.items() for country in countries})
+
+# Merge military expenditure data with geometries
+world['Expenditure'] = world['Region'].map(military_expenditure_data)
+
+# Plot the choropleth map using the 'YlOrRd' colormap with specified vmin and vmax
+world.boundary.plot()
+world.plot(column='Expenditure', legend=True, cmap='viridis', vmin=0, vmax=max(military_expenditure_data.values()))
+plt.title('Military Expenditure by Region')
+plt.show()
+
+import numpy as np
+
+constant_usd_exports_df.replace(10, np.nan, inplace=True)
