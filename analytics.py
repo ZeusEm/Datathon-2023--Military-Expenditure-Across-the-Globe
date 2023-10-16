@@ -262,6 +262,14 @@ for dataframe, name in zip(all_dataframes, all_dataframe_names):
 # Exploratory Data Analysis (EDA) commences
 
 """
+For meaningful global military expenditure comparison and analysis, it is recommended to use the "constant USD" dataset. Constant USD values adjust for inflation, providing a consistent and standardized measure of military expenditure over time. This dataset allows you to compare military spending across countries and years accurately.
+
+Using the "constant USD" dataset ensures that the values are not affected by inflation, making it suitable for comparative analysis and visualization. It provides a stable basis for understanding trends and making meaningful comparisons.
+
+So, you should share the dataset that contains military expenditure values in "constant USD" for your visualization and analysis.
+"""
+
+"""
 Global Trends in Military Expenditure
 
 let's identify when military spending increased or dropped in the given years and correlate them with geopolitical events. Below are the years where significant changes (increases or drops) in military expenditure occurred, along with key geopolitical events for those years:
@@ -328,7 +336,7 @@ import matplotlib.pyplot as plt
 world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
 
 # Specify the aspect ratio
-fig, ax = plt.subplots(subplot_kw={'aspect': 1.0})
+# fig, ax = plt.subplots(subplot_kw={'aspect': 1.0})
 
 # Define regions based on geographical proximity
 regions = {
@@ -376,7 +384,7 @@ world['Region'] = world['name'].map({country: region for region, countries in re
 world['Expenditure'] = world['Region'].map(military_expenditure_data)
 
 # Plot the choropleth map using the 'YlOrRd' colormap with specified vmin and vmax
-world.boundary.plot()
+# world.boundary.plot()
 world.plot(column='Expenditure', legend=True, cmap='viridis', vmin=0, vmax=max(military_expenditure_data.values()))
 plt.title('Military Expenditure by Region')
 plt.show()
@@ -384,3 +392,194 @@ plt.show()
 import numpy as np
 
 constant_usd_exports_df.replace(10, np.nan, inplace=True)
+
+
+# Could've been better had China been there
+
+# Define the countries you want to compare
+countries_of_interest = ["India", "USA", "Russia"]
+
+# Initialize an empty dictionary to store the combined military expenditure
+combined_data = {"Year": []}
+
+# Initialize empty lists for each country's data
+for country in countries_of_interest:
+    combined_data[country] = []
+
+# Iterate over the years
+for year in constant_usd_exports_df.columns[1:-3]:
+    # Check if numeric values are available for all three countries
+    if all(
+        constant_usd_exports_df[constant_usd_exports_df["Country"] == country][year].notna().all()
+        and
+        constant_usd_licences_df[constant_usd_licences_df["Country"] == country][year].notna().all()
+        for country in countries_of_interest
+    ):
+        combined_data["Year"].append(year)
+        for country in countries_of_interest:
+            # Select rows for the country in both datasets
+            exports_data = constant_usd_exports_df[constant_usd_exports_df["Country"] == country]
+            licences_data = constant_usd_licences_df[constant_usd_licences_df["Country"] == country]
+
+            # Calculate the total military expenditure for the year
+            total_expenditure = (
+                exports_data[year].sum() + licences_data[year].sum()
+            )
+
+            combined_data[country].append(total_expenditure)
+
+# Convert the data dictionary into a DataFrame
+combined_df = pd.DataFrame(combined_data)
+
+# Plot a bar chart
+combined_df.set_index("Year").plot(kind="bar", figsize=(12, 6))
+plt.title("Comparative Military Expenditure")
+plt.xlabel("Year")
+plt.ylabel("Total Spending (Constant USD)")
+plt.grid()
+plt.xticks(rotation=45)
+plt.legend(title="Country")
+plt.show()
+
+"""
+
+The differences in military spending between the USA and Russia from 2002 to 2009 and from 2012 to 2016 can be attributed to a combination of political, economic, and strategic factors. Here are some possible reasons for these differences:
+
+From 2002 to 2009 (USA higher than Russia):
+
+Economic Resources: During this period, the United States had a much larger and stronger economy compared to Russia. The USA's higher GDP allowed it to allocate more funds to military spending.
+
+Global Policymaker: The USA played a significant role as a global superpower and was actively involved in various military operations, including the wars in Afghanistan and Iraq. These operations required substantial military expenditures.
+
+Military Modernization: The United States invested heavily in modernizing its armed forces, which often comes with increased spending. This modernization effort included advancements in technology, procurement of new equipment, and maintaining a large standing military.
+
+From 2012 to 2016 (Closer Spending):
+
+Global Changes: The geopolitical landscape underwent significant changes during this period. The United States started to reduce its military presence in the Middle East, particularly in Iraq and Afghanistan, leading to a decrease in its military expenses.
+
+Russian Military Buildup: Russia, on the other hand, increased its military spending, particularly after its annexation of Crimea in 2014. This resulted in Russia allocating a larger share of its budget to the military.
+
+Economic Challenges: The United States faced economic challenges following the 2008 financial crisis. The subsequent reduction in defense spending, commonly referred to as sequestration, led to a slowdown in the growth of military expenditures.
+
+Strategic Reassessment: The USA and Russia may have reassessed their strategic priorities, leading to adjustments in military budgets. For the USA, the focus shifted towards areas like cybersecurity and technology, while Russia increased investments in its conventional and nuclear capabilities.
+
+Arms Control Agreements: Both countries were signatories to arms control agreements, such as the New START treaty. These agreements can have an impact on the levels of military spending.
+
+"""
+
+
+
+# Define the countries you want to compare
+countries_of_interest = ["India", "USA", "Russia"]
+
+# Initialize an empty dictionary to store the combined military expenditure
+combined_data = {"Year": []}
+
+# Initialize empty lists for each country's data
+for country in countries_of_interest:
+    combined_data[country] = []
+
+# Iterate over the years
+for year in constant_usd_exports_df.columns[1:-3]:
+    # Check if numeric values are available for all three countries
+    if all(
+        constant_usd_exports_df[constant_usd_exports_df["Country"] == country][year].notna().all()
+        and
+        constant_usd_licences_df[constant_usd_licences_df["Country"] == country][year].notna().all()
+        for country in countries_of_interest
+    ):
+        combined_data["Year"].append(year)
+        for country in countries_of_interest:
+            # Select rows for the country in both datasets
+            exports_data = constant_usd_exports_df[constant_usd_exports_df["Country"] == country]
+            licences_data = constant_usd_licences_df[constant_usd_licences_df["Country"] == country]
+
+            # Calculate the total military expenditure for the year
+            total_expenditure = (
+                exports_data[year].sum() + licences_data[year].sum()
+            )
+
+            combined_data[country].append(total_expenditure)
+
+# Create a DataFrame
+combined_df = pd.DataFrame(combined_data)
+
+# Define GDP data for India, USA, and Russia
+gdp_data = {
+    "India": [1.165, 1.274, 1.600, 1.859, 1.623, 1.793, 2.043],
+    "USA": [13.134, 13.350, 13.599, 14.341, 14.441, 14.928, 15.566],
+    "Russia": [0.846, 1.289, 1.298, 1.232, 1.479, 1.474, 1.283],
+}
+
+# Update the DataFrame with GDP data
+combined_df = combined_df[combined_df['Year'].between(2003, 2009)]  # Select years 2003 to 2009
+combined_df = combined_df.reset_index(drop=True)
+
+for country in countries_of_interest:
+    combined_df[f'{country}_GDP'] = gdp_data[country]
+
+# Calculate military expenditure as a percentage of GDP
+for country in countries_of_interest:
+    combined_df[f'{country}_Expenditure_as_Percentage_of_GDP'] = (
+        (combined_df[f'{country}'] / combined_df[f'{country}_GDP']) * 100
+    )
+
+# Plot trends over different years
+for country in countries_of_interest:
+    plt.figure(figsize=(10, 6))
+    plt.scatter(
+        combined_df['Year'],
+        combined_df[f'{country}_Expenditure_as_Percentage_of_GDP'],
+        label=country,
+    )
+    plt.title(f'{country} Military Expenditure as a Percentage of GDP (2003-2009)')
+    plt.xlabel('Year')
+    plt.ylabel('Expenditure as Percentage of GDP')
+    plt.legend()
+    plt.grid(True)
+
+# plt.show()
+
+# Plot trends over different years for all three countries
+plt.figure(figsize=(10, 6))
+
+for country in countries_of_interest:
+    plt.plot(
+        combined_df['Year'],
+        combined_df[f'{country}_Expenditure_as_Percentage_of_GDP'],
+        label=country,
+    )
+
+plt.title('Military Expenditure as a Percentage of GDP (2003-2009)')
+plt.xlabel('Year')
+plt.ylabel('Expenditure as Percentage of GDP')
+plt.legend()
+plt.grid(True)
+# plt.show()
+
+# Plot trends over different years for all three countries
+plt.figure(figsize=(10, 6))
+
+for country in countries_of_interest:
+    plt.plot(
+        combined_df['Year'],
+        combined_df[f'{country}_Expenditure_as_Percentage_of_GDP'],
+        label=country,
+    )
+
+plt.title('Military Expenditure as a Percentage of GDP (2003-2009)')
+plt.xlabel('Year')
+plt.ylabel('Expenditure as Percentage of GDP')
+plt.legend()
+plt.grid(True)
+
+# Format the y-axis as percentages
+plt.gca().yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{x:.0%}'))
+
+plt.show()
+
+"""
+US $130.97041365071104 million is equivalent to US $0.13097041365071104 billion.
+0.13097041365071104 is approximately 0.02568% of 510.
+In 2003, India’s military spending was 2.68% of its GDP
+"""
