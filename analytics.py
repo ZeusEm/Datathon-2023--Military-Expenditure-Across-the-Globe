@@ -467,10 +467,8 @@ Arms Control Agreements: Both countries were signatories to arms control agreeme
 
 """
 
-
-
 # Define the countries you want to compare
-countries_of_interest = ["India", "USA", "Russia"]
+countries_of_interest = ["India", "USA"]
 
 # Initialize an empty dictionary to store the combined military expenditure
 combined_data = {"Year": []}
@@ -480,7 +478,7 @@ for country in countries_of_interest:
     combined_data[country] = []
 
 # Iterate over the years
-for year in constant_usd_exports_df.columns[1:-3]:
+for year in constant_usd_exports_df.columns[1:-2]:
     # Check if numeric values are available for all three countries
     if all(
         constant_usd_exports_df[constant_usd_exports_df["Country"] == country][year].notna().all()
@@ -496,7 +494,7 @@ for year in constant_usd_exports_df.columns[1:-3]:
 
             # Calculate the total military expenditure for the year
             total_expenditure = (
-                exports_data[year].sum() + licences_data[year].sum()
+                (exports_data[year].sum() + licences_data[year].sum()) / 1000
             )
 
             combined_data[country].append(total_expenditure)
@@ -506,13 +504,29 @@ combined_df = pd.DataFrame(combined_data)
 
 # Define GDP data for India, USA, and Russia
 gdp_data = {
-    "India": [1.165, 1.274, 1.600, 1.859, 1.623, 1.793, 2.043],
-    "USA": [13.134, 13.350, 13.599, 14.341, 14.441, 14.928, 15.566],
-    "Russia": [0.846, 1.289, 1.298, 1.232, 1.479, 1.474, 1.283],
+    "India": [510, 582, 652, 772, 875, 1209, 1215, 1377, 1675, 1856, 2042, 2104, 2654],
+    "USA": [10600, 10900, 11700, 12400, 13200, 13800, 14400, 14400, 14800, 16200, 16800, 17400, 17900]
+}
+"""
+# Define the military spending data
+military_spending_data = {
+    #"Year": [2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016],
+    "United States": [10600, 10900, 11700, 12400, 13200, 13800, 14400, 14400, 14800, 15400, 15700, 16200, 16800, 17400, 17900],
+    "Russia": [368, 430, 577, 764, 989, 1299, 1660, 1231, 1524, 2050, 2231, 2297, 2063, 1330, 1282],
+    "India": [510, 582, 652, 772, 875, 1209, 1215, 1377, 1675, 1823, 1827, 1856, 2042, 2104, 2654]
 }
 
+# Convert the data into a dictionary
+gdp_data = {
+    "United States": military_spending_data["United States"],
+    "Russia": military_spending_data["Russia"],
+    "India": military_spending_data["India"],
+    #"Year": military_spending_data["Year"]
+}
+"""
+
 # Update the DataFrame with GDP data
-combined_df = combined_df[combined_df['Year'].between(2003, 2009)]  # Select years 2003 to 2009
+combined_df = combined_df[combined_df['Year'].between(2002, 2016)]  # Select years 2002 to 2016
 combined_df = combined_df.reset_index(drop=True)
 
 for country in countries_of_interest:
@@ -523,39 +537,6 @@ for country in countries_of_interest:
     combined_df[f'{country}_Expenditure_as_Percentage_of_GDP'] = (
         (combined_df[f'{country}'] / combined_df[f'{country}_GDP']) * 100
     )
-
-# Plot trends over different years
-for country in countries_of_interest:
-    plt.figure(figsize=(10, 6))
-    plt.scatter(
-        combined_df['Year'],
-        combined_df[f'{country}_Expenditure_as_Percentage_of_GDP'],
-        label=country,
-    )
-    plt.title(f'{country} Military Expenditure as a Percentage of GDP (2003-2009)')
-    plt.xlabel('Year')
-    plt.ylabel('Expenditure as Percentage of GDP')
-    plt.legend()
-    plt.grid(True)
-
-# plt.show()
-
-# Plot trends over different years for all three countries
-plt.figure(figsize=(10, 6))
-
-for country in countries_of_interest:
-    plt.plot(
-        combined_df['Year'],
-        combined_df[f'{country}_Expenditure_as_Percentage_of_GDP'],
-        label=country,
-    )
-
-plt.title('Military Expenditure as a Percentage of GDP (2003-2009)')
-plt.xlabel('Year')
-plt.ylabel('Expenditure as Percentage of GDP')
-plt.legend()
-plt.grid(True)
-# plt.show()
 
 # Plot trends over different years for all three countries
 plt.figure(figsize=(10, 6))
@@ -574,12 +555,28 @@ plt.legend()
 plt.grid(True)
 
 # Format the y-axis as percentages
-plt.gca().yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{x:.0%}'))
+plt.gca().yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f'{y:.0%}'))
 
 plt.show()
 
 """
-US $130.97041365071104 million is equivalent to US $0.13097041365071104 billion.
-0.13097041365071104 is approximately 0.02568% of 510.
-In 2003, India’s military spending was 2.68% of its GDP
+During the period from 2002 to 2016, the military expenditures as a percentage of GDP for India and the United States varied for a combination of historical, geopolitical, and economic reasons:
+
+India:
+
+Historical Factors: India's military spending as a percentage of GDP remained relatively low during this period, which can be attributed to its historical focus on non-alignment during the Cold War and its commitment to peaceful coexistence. India traditionally prioritized socio-economic development over military expansion.
+
+Geopolitical Factors: India's primary focus during this period was regional security, with a particular emphasis on border disputes with Pakistan and China. While the Indian defense budget increased, it was not a significant proportion of GDP. India's policy was to maintain a credible minimum deterrence, which allowed for a more conservative approach to defense spending.
+
+Economic Factors: India experienced steady economic growth during these years. A growing economy allowed for increased government revenue and investment in other sectors, such as infrastructure and social programs. As a result, military spending as a percentage of GDP remained low.
+
+United States:
+
+Historical Factors: The United States has a long history of being a global military power. It was engaged in several military conflicts, including the War on Terror and the Iraq War, which significantly increased military spending.
+
+Geopolitical Factors: The United States' role as a global superpower led to substantial defense commitments around the world. It maintained a global military presence, including military bases in various countries. Furthermore, it was actively involved in conflicts in Iraq and Afghanistan.
+
+Economic Factors: The U.S. had the world's largest economy and defense budget. It could afford to allocate a substantial portion of its GDP to defense spending. The defense industry also played a significant role in the U.S. economy, with strong political and economic incentives for high levels of military expenditure.
+
+In summary, India's lower military spending as a percentage of GDP during 2002-2016 was primarily influenced by its historical approach to non-alignment, regional security priorities, and a focus on economic development. The United States, on the other hand, had a more interventionist global military presence and higher defense expenditures due to its historical role as a superpower, its global commitments, and its strong economy. These factors led to significant differences in military spending as a percentage of GDP between the two countries during this period.
 """
