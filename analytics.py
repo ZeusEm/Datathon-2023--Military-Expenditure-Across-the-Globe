@@ -580,3 +580,110 @@ Economic Factors: The U.S. had the world's largest economy and defense budget. I
 
 In summary, India's lower military spending as a percentage of GDP during 2002-2016 was primarily influenced by its historical approach to non-alignment, regional security priorities, and a focus on economic development. The United States, on the other hand, had a more interventionist global military presence and higher defense expenditures due to its historical role as a superpower, its global commitments, and its strong economy. These factors led to significant differences in military spending as a percentage of GDP between the two countries during this period.
 """
+
+from statsmodels.tsa.arima.model import ARIMA
+
+# Load and preprocess the data for selected countries (similar to previous code)
+# Define the countries you want to compare
+countries_of_interest = ["India", "Germany"]
+
+# Initialize an empty dictionary to store the combined military expenditure
+combined_data = {"Year": []}
+
+# Initialize empty lists for each country's data
+for country in countries_of_interest:
+    combined_data[country] = []
+
+# Iterate over the years
+for year in constant_usd_exports_df.columns[1:-2]:
+    # Check if numeric values are available for all three countries
+    if all(
+        constant_usd_exports_df[constant_usd_exports_df["Country"] == country][year].notna().all()
+        and
+        constant_usd_licences_df[constant_usd_licences_df["Country"] == country][year].notna().all()
+        for country in countries_of_interest
+    ):
+        combined_data["Year"].append(year)
+        for country in countries_of_interest:
+            # Select rows for the country in both datasets
+            exports_data = constant_usd_exports_df[constant_usd_exports_df["Country"] == country]
+            licences_data = constant_usd_licences_df[constant_usd_licences_df["Country"] == country]
+
+            # Calculate the total military expenditure for the year
+            total_expenditure = (
+                (exports_data[year].sum() + licences_data[year].sum()) / 1000
+            )
+
+            combined_data[country].append(total_expenditure)
+
+# Create a DataFrame
+combined_df = pd.DataFrame(combined_data)
+
+# Feature Engineering: Prepare time-series data
+combined_df = combined_df.set_index("Year").stack().reset_index()
+combined_df.columns = ["Year", "Country", "Expenditure"]
+
+# Define the selected countries for forecasting, including India
+selected_countries = ['India', 'Germany']
+
+# Initialize a dictionary to store forecasted data
+forecasted_data = {}
+
+# Initialize a dictionary to store each country's historical data
+historical_data = {}
+
+# Time-Series Forecasting for each selected country
+for country in selected_countries:
+    # Filter data for the current country
+    country_data = combined_df[combined_df['Country'] == country]
+
+    # Convert 'Year' to datetime
+    country_data['Year'] = pd.to_datetime(country_data['Year'], format='%Y')
+
+    # Set 'Year' as the index
+    country_data.set_index('Year', inplace=True)
+
+    # Store historical data for the country
+    historical_data[country] = country_data
+
+    # Train an ARIMA model (you may need to fine-tune hyperparameters)
+    model = ARIMA(country_data['Expenditure'], order=(5, 1, 0))
+    model_fit = model.fit()
+
+    # Forecast future values for 18 years into the future
+    forecasted = model_fit.forecast(steps=18)
+    forecasted_years = pd.date_range(start=country_data.index.max(), periods=18, freq='Y')
+
+    # Store the forecasted data in the dictionary
+    forecasted_data[country] = pd.DataFrame({'Year': forecasted_years, 'Expenditure': forecasted})
+
+# Visualization: Plot historical and forecasted data for all selected countries
+plt.figure(figsize=(12, 6))
+
+# Convert 'Year' to datetime with December 31st for all years
+combined_df['Year'] = pd.to_datetime(combined_df['Year'].astype(str) + '-12-31')
+combined_df.set_index('Year', inplace=True)
+
+for country, forecasted_df in forecasted_data.items():
+    plt.plot(
+        historical_data[country].index,  # Access the datetime index
+        historical_data[country]["Expenditure"],  # Access the "Expenditure" column
+        label=f'{country} (Historical)'
+    )
+
+    plt.plot(
+        forecasted_df['Year'],
+        forecasted_df['Expenditure'],
+        linestyle='--',
+        marker='o',
+        label=f'{country} (Forecast)'
+    )
+
+plt.title('Historical and Forecasted Military Expenditure (Constant USD)')
+plt.xlabel('Year')
+plt.ylabel('Expenditure (Constant USD)')
+plt.legend()
+plt.grid(True)
+plt.xticks(rotation=45)
+
+plt.show()
