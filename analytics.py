@@ -709,3 +709,80 @@ Rapid Increase Post-2016: The subsequent significant increase in India's militar
 
 In summary, Germany's military expenditure trends can be linked to international peacekeeping missions, fiscal considerations, and shifts in security priorities. On the other hand, India's trends reflect its evolving geopolitical challenges, regional security concerns, and a commitment to strengthening its defense capabilities. These interpretations are based on historical patterns and geopolitical knowledge, but it's essential to consult specific historical and political sources for a more comprehensive analysis.
 """
+
+#---------------------------------------------------#
+
+
+# Specify the file path
+file_path = r'D:\Projects\datathon23\datasets\Total_Arms_Sales.xlsx'
+
+# Read data from the Excel file
+data = pd.read_excel(file_path, sheet_name="Sheet1", skiprows=[0, 1, 2, 6, 9])
+
+# Remove rows 0 and 1
+data = data.drop([0, 1])
+
+# Reset the index to start from 0
+data = data.reset_index(drop=True)
+
+import matplotlib.pyplot as plt
+
+# Data
+years = data.columns[1:-1].astype(float)  # Extract years as floats
+total_sales = data.iloc[0, 1:-1].astype(float)
+percentage_change = data.iloc[1, 1:-1].astype(float)
+
+# Create subplots
+fig, ax1 = plt.subplots(figsize=(10, 6))
+
+# Plot total arms sales on the primary y-axis
+ax1.set_xlabel('Year')
+ax1.set_ylabel('Total Arms Sales (Constant 2021 USD Billion)', color='tab:blue')
+ax1.plot(years, total_sales, color='tab:blue', label='Total Sales')
+ax1.tick_params(axis='y', labelcolor='tab:blue')
+
+# Create a secondary y-axis
+ax2 = ax1.twinx()
+
+# Plot percentage change on the secondary y-axis
+ax2.set_ylabel('Percentage Change', color='tab:orange')
+ax2.bar(years, percentage_change, color='tab:orange', label='Percentage Change', alpha=0.5)
+ax2.tick_params(axis='y', labelcolor='tab:orange')
+
+# Set labels and title
+plt.title('Total Arms Sales and Percentage Change Over Years (2002-2021)')
+plt.xlabel('Year')
+
+# Set tick positions and labels for years with decimals every two years
+xticks = [int(year) if year.is_integer() and int(year) % 2 == 0 else '' for year in years]
+plt.xticks(years, xticks)
+
+# Add a legend
+lines, labels = ax1.get_legend_handles_labels()
+lines2, labels2 = ax2.get_legend_handles_labels()
+ax2.legend(lines + lines2, labels + labels2, loc='upper left')
+
+# Display the plot
+plt.show()
+
+"""
+The data represents total arms sales in constant 2021 USD billion for the top 100 arms companies globally from 2002 to 2021, along with the percentage change each year. Let's relate this data to significant geopolitical situations and events during this period:
+
+2002-2003 - Post-9/11 Conflict: The increase in arms sales between 2002 and 2003 may be attributed to the United States' response to the 9/11 terrorist attacks. The U.S. led the global war on terror, resulting in increased defense spending.
+
+2003-2005 - Iraq War: The arms sales continued to rise as the Iraq War began in 2003. This conflict led to high military expenditures, primarily by the U.S. and its allies.
+
+2008 - Global Financial Crisis: In 2008, there was a significant peak in arms sales. This was the year of the global financial crisis. Paradoxically, arms sales increased during economic downturns as countries invested in defense.
+
+2013-2014 - Conflict in Ukraine: The increase in arms sales during this period coincides with the conflict in Ukraine, including the annexation of Crimea by Russia. It led to a surge in defense spending by NATO members.
+
+2015-2016 - Syrian Civil War: The arms sales continued to rise, possibly due to the ongoing Syrian Civil War. Multiple countries supported various factions, leading to increased arms trade.
+
+2020-2021 - COVID-19 Pandemic: The substantial spike in arms sales in 2020-2021 might be related to the COVID-19 pandemic. Countries may have increased their defense spending due to geopolitical uncertainties stemming from the pandemic.
+
+Overall Trends: The overall trend of increasing arms sales reflects geopolitical tensions, regional conflicts, and the modernization of armed forces globally. The intermittent decreases may represent efforts to reduce military expenditure during periods of relative peace.
+
+The percentage changes highlight the year-to-year variations. The significant increase in 2014 is particularly noticeable, possibly related to intensified conflicts in the Middle East and Eastern Europe. The data shows how political events and crises can influence arms sales and military expenditure.
+"""
+
+#-----------------------------------------------------------------#
