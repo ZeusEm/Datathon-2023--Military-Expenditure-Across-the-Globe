@@ -786,3 +786,47 @@ The percentage changes highlight the year-to-year variations. The significant in
 """
 
 #-----------------------------------------------------------------#
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Load the Excel file with multiple worksheets
+xls = pd.ExcelFile(r'D:\Projects\datathon23\datasets\Top_100_Arms-Producing.xlsx')
+
+# Read the data for the year 2021 and skip the first three rows
+df_2021 = pd.read_excel(xls, '2021', skiprows=3)
+
+# Create a dictionary to map the old column names to the new names
+column_name_mapping = {
+    'Country (d)': 'Country',
+    'Company (c) ': 'Company'
+}
+
+# Rename columns based on the mapping
+df_2021 = df_2021.rename(columns=column_name_mapping)
+
+# Group smaller countries into an "Others" category
+country_sales = df_2021.groupby('Country')['Arms Sales (2021)'].sum()
+top_countries = country_sales.nlargest(15)
+other_countries = country_sales[~country_sales.index.isin(top_countries.index)].sum()
+top_countries['Others'] = other_countries
+
+# Get the top 5 companies in the legend
+top_5_companies = df_2021.groupby('Country')['Company'].sum().value_counts()[:5].index
+
+# Create a stacked bar chart for the year 2021 with the top 10 countries and an "Others" category
+plt.figure(figsize=(12, 6))
+ax = top_countries.plot(kind='bar', stacked=True, colormap='tab20')
+plt.xlabel('Country')
+plt.ylabel('Arms Sales (in millions of US$)')
+plt.xticks(rotation=45)
+ax.legend(title='Company', labels=top_5_companies)
+
+# Create a line graph depicting global trends in military expenditure
+global_trends = df_2021.groupby('Country')['Arms Sales (2021)'].sum().sort_values(ascending=False)[:15]
+plt.twinx()
+global_trends.plot(marker='o', linestyle='-', color='b')
+plt.title('Arms Sales by Country and Global Trends in Military Expenditure - 2021 (Top 15 Countries + Others)')
+plt.ylabel('Total Arms Sales (in millions of US$) - Global Trends')
+
+plt.show()
