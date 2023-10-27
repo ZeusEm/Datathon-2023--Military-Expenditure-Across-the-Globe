@@ -787,6 +787,7 @@ The percentage changes highlight the year-to-year variations. The significant in
 
 #-----------------------------------------------------------------#
 
+"""
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -807,26 +808,84 @@ df_2021 = df_2021.rename(columns=column_name_mapping)
 
 # Group smaller countries into an "Others" category
 country_sales = df_2021.groupby('Country')['Arms Sales (2021)'].sum()
-top_countries = country_sales.nlargest(15)
+top_countries = country_sales.nlargest(12)
 other_countries = country_sales[~country_sales.index.isin(top_countries.index)].sum()
 top_countries['Others'] = other_countries
 
 # Get the top 5 companies in the legend
 top_5_companies = df_2021.groupby('Country')['Company'].sum().value_counts()[:5].index
 
+# Create a custom colormap for the stacked bar chart
+custom_colormap = plt.cm.get_cmap('tab20', len(top_countries.index))
+
+# Increase the overall plot size
+fig, ax = plt.subplots(figsize=(16, 8))
+
 # Create a stacked bar chart for the year 2021 with the top 10 countries and an "Others" category
-plt.figure(figsize=(12, 6))
-ax = top_countries.plot(kind='bar', stacked=True, colormap='tab20')
-plt.xlabel('Country')
-plt.ylabel('Arms Sales (in millions of US$)')
-plt.xticks(rotation=45)
+top_countries.plot(kind='bar', stacked=True, colormap=custom_colormap, ax=ax, width=0.9)  # Adjust width for spacing
+ax.set_xlabel('Country')
+ax.set_ylabel('Arms Sales (in millions of US$)')
+ax.set_xticks(range(len(top_countries.index)))
+# Replace the last label with "Others"
+xtick_labels = list(top_countries.index)
+xtick_labels[-1] = 'Others'
+ax.set_xticklabels(xtick_labels, rotation=45)  # Rotate x-axis labels
 ax.legend(title='Company', labels=top_5_companies)
 
 # Create a line graph depicting global trends in military expenditure
-global_trends = df_2021.groupby('Country')['Arms Sales (2021)'].sum().sort_values(ascending=False)[:15]
-plt.twinx()
+global_trends = df_2021.groupby('Country')['Arms Sales (2021)'].sum().sort_values(ascending=False)[:12]
 global_trends.plot(marker='o', linestyle='-', color='b')
-plt.title('Arms Sales by Country and Global Trends in Military Expenditure - 2021 (Top 15 Countries + Others)')
-plt.ylabel('Total Arms Sales (in millions of US$) - Global Trends')
+ax.set_title('Arms Sales by Country and Global Trends in Military Expenditure - 2021 (Top 10 Countries + Others)')
 
+# Show the "Others" label on the x-axis
+ax.set_xticklabels(xtick_labels, rotation=45)
+plt.show()
+"""
+
+
+
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Load the Excel file with multiple worksheets
+xls = pd.ExcelFile(r'D:\Projects\datathon23\datasets\Top_100_Arms-Producing.xlsx')
+
+# Read the data for the year 2021 and skip the first three rows
+df_2021 = pd.read_excel(xls, '2021', skiprows=3)
+
+# Create a dictionary to map the old column names to the new names
+column_name_mapping = {
+    'Country (d)': 'Country',
+    'Company (c) ': 'Company'
+}
+
+# Rename columns based on the mapping
+df_2021 = df_2021.rename(columns=column_name_mapping)
+
+# Group data by country and company, and sum the sales
+grouped_data = df_2021.groupby(['Country', 'Company'])['Arms Sales (2021)'].sum().unstack(fill_value=0)
+
+# Sort companies by total sales and select the top 10
+top_10_companies = grouped_data.sum().nlargest(10).index
+
+# Assign unique colors to all companies
+colors = plt.cm.get_cmap('tab20', len(grouped_data.columns))
+
+# Create a stacked bar chart for the year 2021
+fig, ax = plt.subplots(figsize=(12, 6))
+bottom = np.zeros(len(grouped_data))
+
+for company, color in zip(grouped_data.columns, colors(range(len(grouped_data.columns)))):
+    plt.bar(grouped_data.index, grouped_data[company], bottom=bottom, label=company, color=color)
+    bottom += grouped_data[company]
+
+# Add a legend for the top 10 companies
+plt.legend(title='Company', labels=top_10_companies)
+
+plt.xlabel('Country')
+plt.ylabel('Arms Sales (in millions of US$)')
+plt.xticks(rotation=45)
+plt.title('Arms Sales by Companies and Countries - 2021')
 plt.show()
