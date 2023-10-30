@@ -842,6 +842,8 @@ plt.show()
 
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+import numpy as np
 
 # Load the Excel file with multiple worksheets
 xls = pd.ExcelFile(r'D:\Projects\datathon23\datasets\Top_100_Arms-Producing.xlsx')
@@ -876,7 +878,6 @@ for sheet_name in xls.sheet_names:
     
     if company_column is not None and arms_sales_column is not None:
         # Iterate through the rows of the dataframe
-        # Iterate through the rows of the dataframe
         for index, row in df.iterrows():
             company = str(row[company_column]).strip()
             year = int(sheet_name)
@@ -894,17 +895,29 @@ for company, data in sales_data.items():
     if len(years) == 20 and min(years) == 2002 and max(years) == 2021:
         selected_companies[company] = data
 
-# Sort companies by their 2021 sales
-sorted_companies = sorted(selected_companies.items(), key=lambda x: x[1]['sales'][-1], reverse=True)
-top_companies = sorted_companies[:10]
-
 # Create a visualization of historical sales for the top companies
 plt.figure(figsize=(12, 6))
-for company, data in top_companies:
-    plt.plot(data['years'], data['sales'], label=company)
+for company, data in selected_companies.items():
+    # Prepare your data for model training
+    historical_years = np.array(data['years']).reshape(-1, 1)
+    historical_sales = np.array(data['sales'])
+
+    # Train a linear regression model
+    model = LinearRegression()
+    model.fit(historical_years, historical_sales)
+
+    # Predict future sales for the next 10 years
+    future_years = np.array(range(2022, 2032)).reshape(-1, 1)
+    predicted_sales = model.predict(future_years)
+
+    # Plot historical sales with solid lines
+    plt.plot(data['years'], data['sales'], label=f'{company} (Historical)')
+
+    # Plot predicted sales with dotted lines
+    plt.plot(future_years, predicted_sales, linestyle='--', label=f'{company} (Predicted)')
 
 plt.xlabel('Year')
 plt.ylabel('Sales')
-plt.title('Historical Sales for Top 10 Companies (2002-2021)')
+plt.title('Historical and Predicted Sales for Selected Companies (2002-2031)')
 plt.legend()
 plt.show()
