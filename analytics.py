@@ -838,102 +838,73 @@ plt.show()
 
 
 
+
+
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression
-import numpy as np
 
 # Load the Excel file with multiple worksheets
 xls = pd.ExcelFile(r'D:\Projects\datathon23\datasets\Top_100_Arms-Producing.xlsx')
 
-# List to store company names that exist in all years
-all_years_companies = []
-
-# Dictionary to store historical and predicted sales data
+# Dictionary to store historical sales data
 sales_data = {}
 
-# Initialize the company column to None
-company_column = None
+# Possible company column names
+possible_company_columns = ['Company (c)', 'Company (c) ', ' Company (c)', ' Company (c)']
 
 # Iterate through worksheets (years)
 for sheet_name in xls.sheet_names:
     # Remove leading and trailing spaces from the worksheet name
     sheet_name = sheet_name.strip()
-    
+
     # Read the data for the current worksheet and skip the first three rows
     df = pd.read_excel(xls, sheet_name, skiprows=3)
     
-    # Limit the rows to 100, skipping all rows after the 100th row
-    df = df.head(100)
-    
-    # List of possible formats for the company column
-    possible_company_columns = ['Company (c)', 'Company (c) ', ' Company (c)', ' Company (c)']
-        
     # Identify the company column based on various possible column names
+    company_column = None
     for col_name in possible_company_columns:
-        stripped_col_name = col_name.strip()
-        if stripped_col_name in df.columns:
-            company_column = stripped_col_name
+        if col_name in df.columns:
+            company_column = col_name
             break
 
     # Check if an arms sales column is present
     arms_sales_column = None
     for col_name in df.columns:
-        col_name = col_name.strip()
-        if col_name.startswith('Arms Sales') or col_name.startswith(' Arms Sales'):
+        if col_name.strip().startswith('Arms Sales'):
             arms_sales_column = col_name
             break
-
-    if company_column and arms_sales_column:
-        companies = df[company_column].unique()
+    
+    if company_column is not None and arms_sales_column is not None:
+        # Iterate through the rows of the dataframe
+        # Iterate through the rows of the dataframe
+        for index, row in df.iterrows():
+            company = str(row[company_column]).strip()
+            year = int(sheet_name)
+            arms_sales = row[arms_sales_column]
+            if company not in sales_data:
+                sales_data[company] = {'years': [], 'sales': []}
         
-        for company in companies:
-            # Check if the company is already in the list
-            if company not in all_years_companies:
-                # Check if the company has data in all years
-                if all(
-                    sheet_name.strip() in xls.sheet_names and
-                    df[df[company_column] == company][col_name].count() == 1
-                    for sheet_name in xls.sheet_names
-                ):
-                    all_years_companies.append(company)
-                    # Extract historical sales data
-                    sales = df[df[company_column] == company][arms_sales_column].values
-                    if company not in sales_data:
-                        sales_data[company] = {'historical': [], 'predicted': []}
-                    sales_data[company]['historical'].extend(sales)
+            sales_data[company]['years'].append(year)
+            sales_data[company]['sales'].append(arms_sales)
 
-
-# Create a visualization of historical sales
-plt.figure(figsize=(12, 6))
+# Filter companies with data for all years from 2002 to 2021
+selected_companies = {}
 for company, data in sales_data.items():
-    plt.plot(range(2021, 2001, -1), data['historical'], label=company)
+    years = data['years']
+    if len(years) == 20 and min(years) == 2002 and max(years) == 2021:
+        selected_companies[company] = data
+
+# Sort companies by their 2021 sales
+sorted_companies = sorted(selected_companies.items(), key=lambda x: x[1]['sales'][-1], reverse=True)
+top_companies = sorted_companies[:10]
+
+# Create a visualization of historical sales for the top companies
+plt.figure(figsize=(12, 6))
+for company, data in top_companies:
+    plt.plot(data['years'], data['sales'], label=company)
 
 plt.xlabel('Year')
 plt.ylabel('Sales')
-plt.title('Historical Sales for Selected Companies')
-plt.legend()
-plt.show()
-
-# Train a linear regression model for sales prediction
-model = LinearRegression()
-
-# Predict sales for the next 10 years
-for company, data in sales_data.items():
-    x = np.array(range(2021, 2011, -1)).reshape(-1, 1)
-    y = data['historical']
-    model.fit(x, y)
-    future_years = range(2022, 2032)
-    predicted_sales = model.predict(np.array(future_years).reshape(-1, 1))
-    data['predicted'] = predicted_sales
-
-# Create a visualization of historical and predicted sales
-plt.figure(figsize=(12, 6))
-for company, data in sales_data.items():
-    plt.plot(range(2021, 2032), data['historical'] + data['predicted'], label=company)
-
-plt.xlabel('Year')
-plt.ylabel('Sales')
-plt.title('Historical and Predicted Sales for Selected Companies')
+plt.title('Historical Sales for Top 10 Companies (2002-2021)')
 plt.legend()
 plt.show()
