@@ -835,11 +835,6 @@ plt.xticks(rotation=45)
 plt.title('Arms Sales by Companies and Countries - 2021')
 plt.show()
 
-
-
-
-
-
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
@@ -897,7 +892,12 @@ for company, data in sales_data.items():
 
 # Create a visualization of historical sales for the top companies
 plt.figure(figsize=(12, 6))
+count = 0  # Initialize a count variable
 for company, data in selected_companies.items():
+    # Break the loop if more than 10 iterations have been performed
+    if count >= 5:
+        break
+    
     # Prepare your data for model training
     historical_years = np.array(data['years']).reshape(-1, 1)
     historical_sales = np.array(data['sales'])
@@ -915,6 +915,9 @@ for company, data in selected_companies.items():
 
     # Plot predicted sales with dotted lines
     plt.plot(future_years, predicted_sales, linestyle='--', label=f'{company} (Predicted)')
+    
+    # Increment the count
+    count += 1
 
 plt.xlabel('Year')
 plt.ylabel('Sales')
