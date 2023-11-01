@@ -924,3 +924,93 @@ plt.ylabel('Sales')
 plt.title('Historical and Predicted Sales for Selected Companies (2002-2031)')
 plt.legend()
 plt.show()
+
+#---------------------------------------------------------------#
+
+import pandas as pd
+
+# Load the Excel file with multiple worksheets
+xls = pd.ExcelFile(r'D:\Projects\datathon23\datasets\Military_Expenditure_by_ountry.xlsx')
+
+# Read the data for the year 2021 and skip the first three rows
+df = pd.read_excel(xls, sheet_name="Regional totals", skiprows=14)
+
+# Desrcriptive Statistics
+
+# Select the columns with numeric data (from 1950 to 2019)
+numeric_columns = df.columns[1:-2]
+
+# Convert the selected columns to numeric (ignoring errors for non-numeric and NaN values)
+df[numeric_columns] = df[numeric_columns].apply(pd.to_numeric, errors='coerce')
+
+# Calculate mean, median, and standard deviation for each row (region) while ignoring NaN values
+df['Mean'] = df[numeric_columns].mean(axis=1, skipna=True)
+df['Median'] = df[numeric_columns].median(axis=1, skipna=True)
+df['Standard Deviation'] = df[numeric_columns].std(axis=1, skipna=True)
+
+# Select the columns of interest (Region and the calculated statistics)
+summary_stats = df[['Region', 'Mean', 'Median', 'Standard Deviation']]
+
+# Display the summary statistics
+print(summary_stats)
+
+
+import pandas as pd
+import numpy as np
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
+
+# Load the Excel file with multiple worksheets
+xls = pd.ExcelFile(r'D:\Projects\datathon23\datasets\Military_Expenditure_by_ountry.xlsx')
+
+# Define a list of columns to include or exclude
+columns_to_skip = ["2019 (current prices)", "Omitted countries"]  # Replace with the actual column names you want to skip
+
+# Read the Excel file and skip specified rows and columns
+df = pd.read_excel(xls, sheet_name="Regional totals", skiprows=14, usecols=lambda x: x not in columns_to_skip)
+
+# Remove the last (unnamed) column
+df = df.iloc[:, :-1]  # This selects all columns except the last one
+
+# Select a region of interest, e.g., 'World total (excluding Iraq)'
+region_data = df[df['Region'] == 'World total (including Iraq)']
+
+# Define the numeric columns (years) for the time series
+numeric_columns = region_data.columns[1:]
+
+# Convert the selected columns to numeric (ignoring errors for non-numeric and NaN values)
+region_data[numeric_columns] = region_data[numeric_columns].apply(pd.to_numeric, errors='coerce')
+
+# Create a time series with the data
+ts = region_data.iloc[0, 1:].fillna(0).values  # Fill missing values with zeros
+
+# Set the frequency of the time series to 'A' (annual)
+ts = pd.Series(ts, index=pd.date_range(start='1950-01-01', periods=len(ts), freq='A'))
+
+# Perform time series decomposition (trend, seasonal, and residual)
+decomposition = sm.tsa.seasonal_decompose(ts, model='additive')
+
+# Plot the original time series, trend, seasonality, and residuals
+plt.figure(figsize=(12, 6))
+plt.subplot(411)
+plt.title('Original Time Series for Military Expenditure by the World (including Iraq)')
+plt.plot(ts, label='Original', color='blue')
+plt.legend()
+
+plt.subplot(412)
+plt.title('Trend')
+plt.plot(decomposition.trend, label='Trend', color='red')
+plt.legend()
+
+plt.subplot(413)
+plt.title('Seasonality')
+plt.plot(decomposition.seasonal, label='Seasonal', color='green')
+plt.legend()
+
+plt.subplot(414)
+plt.title('Residuals')
+plt.plot(decomposition.resid, label='Residuals', color='purple')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
