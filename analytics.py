@@ -993,7 +993,7 @@ decomposition = sm.tsa.seasonal_decompose(ts, model='additive')
 # Plot the original time series, trend, seasonality, and residuals
 plt.figure(figsize=(12, 6))
 plt.subplot(411)
-plt.title('Original Time Series for Military Expenditure by the World (including Iraq)')
+plt.title('Time Series Analysis for Military Expenditure by the World (including Iraq)')
 plt.plot(ts, label='Original', color='blue')
 plt.legend()
 
@@ -1013,4 +1013,197 @@ plt.plot(decomposition.resid, label='Residuals', color='purple')
 plt.legend()
 
 plt.tight_layout()
+plt.show()
+
+"""
+If the seasonality and residuals are straight lines parallel to the x-axis, and the trend curve is the same as the original time series curve, it suggests that there might be an issue with the decomposition or the data you're using for decomposition. In a proper time series decomposition, you would typically expect:
+
+Original Time Series: This represents the actual data, and the pattern in the original time series should be a combination of trend, seasonality, and residuals. It's not unusual for the original time series to exhibit trends, seasonality, and variations.
+
+Trend: The trend component should capture the long-term, systematic variation in the data. It may go up or down over time, indicating a significant and sustained change in the data. If the trend curve is identical to the original time series, it could indicate that the decomposition process did not effectively separate the trend component.
+
+Seasonality: Seasonality should capture periodic, repeating patterns in the data. If the seasonal component is a straight line parallel to the x-axis, it may suggest that there is no significant seasonal pattern in the data, or there could be issues with the decomposition.
+
+Residuals: The residuals represent the unexplained or random variation in the data after removing the trend and seasonality. A straight line for residuals may indicate that the model has captured most of the variation, and what remains is relatively constant.
+
+Here are some possible explanations for the observations you described:
+
+The data may not contain strong seasonal patterns.
+The decomposition model may not be suitable for this dataset.
+There might be errors or issues in the implementation of the decomposition process.
+"""
+
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Load the Excel file with multiple worksheets
+xls = pd.ExcelFile(r'D:\Projects\datathon23\datasets\Military_Expenditure_by_ountry.xlsx')
+
+# Define a list of columns to include or exclude
+columns_to_skip = ["2019 (current prices)", "Omitted countries"]  # Replace with the actual column names you want to skip
+
+# Read the Excel file and skip specified rows and columns
+df = pd.read_excel(xls, sheet_name="Regional totals", skiprows=14, usecols=lambda x: x not in columns_to_skip)
+
+# Remove the last (unnamed) column
+df = df.iloc[:, :-1]  # This selects all columns except the last one
+
+# Pivot the DataFrame so that 'Region' becomes the index
+df_pivoted = df.set_index('Region')
+
+# Transpose the DataFrame to have years as the index
+df_pivoted = df_pivoted.T
+
+# Convert the data to numeric, replacing non-numeric values with NaN
+df_pivoted = df_pivoted.apply(pd.to_numeric, errors='coerce')
+
+# Calculate the correlation matrix
+correlation_matrix = df_pivoted.corr()
+
+# Create a heatmap
+plt.figure(figsize=(12, 8))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt='.2f', linewidths=0.5)
+plt.title("Correlation Heatmap of Military Expenditure by Region")
+plt.show()
+
+# Threshold for considering correlations
+correlation_threshold = 0.8
+
+# Create a list to store textual explanations
+explanations = []
+
+# Iterate over the columns of the correlation matrix
+for col in correlation_matrix.columns:
+    for idx, value in correlation_matrix[col].items():
+        if col != idx and abs(value) >= correlation_threshold:
+            explanation = f"The military spending of '{col}' is "
+            if value > 0:
+                explanation += f"positively correlated with '{idx}'"
+            else:
+                explanation += f"negatively correlated with '{idx}'"
+            explanation += f" (Correlation: {value:.2f})"
+            explanations.append(explanation)
+
+# Print the explanations
+for explanation in explanations:
+    print(explanation)
+    
+    
+
+import pandas as pd
+import numpy as np
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+
+# Load the Excel file with multiple worksheets
+xls = pd.ExcelFile(r'D:\Projects\datathon23\datasets\Military_Expenditure_by_ountry.xlsx')
+
+# Define a list of columns to include or exclude
+columns_to_skip = ["2019 (current prices)", "Omitted countries"]  # Replace with the actual column names you want to skip
+
+# Read the Excel file and skip specified rows and columns
+df = pd.read_excel(xls, sheet_name="Regional totals", skiprows=14, usecols=lambda x: x not in columns_to_skip)
+
+# Extract the columns with military spending data (years)
+military_spending_data = df.iloc[:, 1:]
+
+# Convert feature names (column names) to strings
+military_spending_data.columns = military_spending_data.columns.astype(str)
+
+# Replace non-numeric values with NaN
+military_spending_data = military_spending_data.apply(pd.to_numeric, errors='coerce')
+
+# Perform data preprocessing, if necessary (e.g., handling missing values, scaling)
+
+# Standardize the data (important for K-Means)
+scaler = StandardScaler()
+military_spending_data_scaled = scaler.fit_transform(military_spending_data)
+
+from sklearn.impute import SimpleImputer
+
+# Create a SimpleImputer to impute NaN values with the mean of each column
+imputer = SimpleImputer(strategy='mean')
+
+# Impute the NaN values
+military_spending_data_imputed = imputer.fit_transform(military_spending_data_scaled)
+
+# Determine the optimal number of clusters using the Elbow method
+wcss = []
+for i in range(1, 11):
+    kmeans = KMeans(n_clusters=i, init='k-means++', max_iter=300, n_init=10, random_state=0)
+    kmeans.fit(military_spending_data_imputed)
+    wcss.append(kmeans.inertia_)
+
+# Plot the Elbow method results
+plt.plot(range(1, 11), wcss)
+plt.title('Elbow Method')
+plt.xlabel('Number of clusters')
+plt.ylabel('WCSS')  # Within-Cluster Sum of Squares
+plt.show()
+
+# Choose an appropriate number of clusters based on the Elbow method results
+# For example, you can set n_clusters = 3 if the 'elbow' of the plot is around 3
+
+# Perform K-Means clustering
+n_clusters = 3  # You can change this based on the Elbow method result
+kmeans = KMeans(n_clusters=n_clusters, init='k-means++', max_iter=300, n_init=10, random_state=0)
+cluster_labels = kmeans.fit_predict(military_spending_data_scaled)
+
+# Add the cluster labels to the DataFrame
+df['Cluster'] = cluster_labels
+
+# Now, df contains the original data with an additional 'Cluster' column indicating the cluster for each region
+# You can analyze and visualize the clusters as needed
+
+"""
+In K-Means clustering, the Within-Cluster-Sum-of-Squares (WCSS) is a measure of the variability or dispersion of data points within the clusters. It is an important metric used to determine the optimal number of clusters in K-Means.
+
+When you plot the WCSS for different values of k (the number of clusters), you often observe a curve that starts high and decreases as k increases, forming an "elbow" shape. The "elbow" point in the curve is typically where you should choose the number of clusters.
+
+At the beginning of the curve (small k values), adding more clusters reduces the WCSS significantly. This is because each data point is closer to the centroids, leading to smaller within-cluster variations.
+
+As you increase k, the reduction in WCSS becomes less pronounced, and the curve starts to bend. The "elbow" point is where the rate of reduction sharply changes or levels off. This point represents a good trade-off between the number of clusters and the compactness of the clusters.
+
+Selecting the number of clusters at the "elbow" point is a common heuristic for determining the optimal number of clusters. However, the choice of the exact number of clusters can still be somewhat subjective and may require domain knowledge and additional analysis.
+
+So, when you see a curve with an "elbow" shape, it suggests that the point where the curve starts to bend is a reasonable choice for the number of clusters that effectively represent the underlying structure of your data.
+"""
+
+optimal_k = 3  # Replace with the number of clusters you've determined
+
+kmeans = KMeans(n_clusters=optimal_k, init='k-means++', max_iter=300, n_init=10, random_state=0)
+kmeans.fit(military_spending_data_imputed)
+
+# Get cluster labels for each data point
+cluster_labels = kmeans.predict(military_spending_data_imputed)
+
+# Assign cluster labels to your DataFrame
+df['Cluster'] = cluster_labels
+
+cluster_0_data = df[df['Cluster'] == 0]
+cluster_1_data = df[df['Cluster'] == 1]
+cluster_2_data = df[df['Cluster'] == 2]
+
+# Replace non-numeric values with NaN
+df = df.replace('. .', np.nan)
+
+# Now, create a scatter plot for all clusters
+cluster_labels = [0, 1, 2]  # Replace with the cluster labels you have
+colors = ['red', 'blue', 'green']  # You can choose different colors for each cluster
+labels = ['Americas', 'Rest of the World', 'World Total']
+
+plt.figure(figsize=(10, 6))
+
+for i, cluster_label in enumerate(cluster_labels):
+    cluster_data = df[df['Cluster'] == cluster_label]
+    years = df.columns[1:-2]  # Assuming the year columns are from the second column to the third-to-last column
+    spending_values = cluster_data.iloc[0, 1:-2]  # Assuming you want to plot the first row of each cluster
+    plt.scatter(years, spending_values, label=f'Cluster {cluster_label}: {labels[i]}', color=colors[i])
+
+plt.title('Cluster Demarcation')
+plt.xlabel('Years')
+plt.ylabel('Military Spending')
+plt.legend()
 plt.show()
