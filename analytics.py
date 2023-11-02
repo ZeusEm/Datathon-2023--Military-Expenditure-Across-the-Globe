@@ -1207,3 +1207,217 @@ plt.xlabel('Years')
 plt.ylabel('Military Spending')
 plt.legend()
 plt.show()
+
+
+
+import pandas as pd
+import numpy as np
+
+# Load the Excel file with multiple worksheets
+xls = pd.ExcelFile(r'D:\Projects\datathon23\datasets\Military_Expenditure_by_ountry.xlsx')
+
+# Define a list of columns to skip
+columns_to_skip = ["2019 (current prices)", "Omitted countries"]  # Replace with the actual column names you want to skip
+
+# Read the Excel file and skip specified rows and columns
+df = pd.read_excel(xls, sheet_name="Regional totals", skiprows=14, usecols=lambda x: x not in columns_to_skip)
+
+# Remove the rightmost column
+df = df.iloc[:, :-1]
+
+# Extract the columns with military spending data (years)
+military_spending_data = df.iloc[:, 1:]
+
+# Convert feature names (column names) to strings
+military_spending_data.columns = military_spending_data.columns.astype(str)
+
+# Replace non-numeric values with NaN
+military_spending_data = military_spending_data.apply(pd.to_numeric, errors='coerce')
+
+# Perform anomaly detection using Z-scores
+# Define a threshold for anomaly detection (e.g., 2.0 for a 95% confidence interval)
+threshold = 2.5
+
+# Calculate the mean and standard deviation for each year
+mean = military_spending_data.mean()
+std = military_spending_data.std()
+
+# Calculate Z-scores for each data point
+z_scores = (military_spending_data - mean) / std
+
+# Identify anomalies based on the threshold
+anomalies = z_scores > threshold
+
+# Print the index where anomalies are detected
+anomalous_regions = anomalies.index[anomalies.any(axis=1)]
+
+# Print the anomalous regions
+print("Anomalous Regions:", anomalous_regions)
+
+anomalous_region_names = df['Region'].iloc[anomalous_regions]
+print("Anomalous Region Names:", anomalous_region_names)
+
+"""
+Rationale and Explanation:
+
+Z-Scores: Z-scores are a measure of how far away a particular data point is from the mean of the data in terms of standard deviations. In this context, Z-scores are used to identify regions with military spending that significantly deviates from the mean. A high absolute Z-score indicates an extreme deviation.
+
+Threshold Value: The threshold value is a critical parameter in anomaly detection. It defines the cutoff point for what is considered an anomaly. In your code, anomalies are identified when the absolute Z-score is greater than this threshold.
+
+Anomaly Detection: Anomaly detection is the process of identifying data points that are significantly different from the majority of the data. It's valuable for discovering unusual patterns or outliers in your data. In this case, you're looking for regions with military spending that are exceptionally high or low compared to the rest.
+"""
+
+import matplotlib.pyplot as plt
+
+# Create a figure and axis
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# Plot the Z-scores for each region
+for i in range(len(z_scores.columns)):
+    ax.bar(z_scores.index, z_scores.iloc[:, i], align='center', alpha=0.7)
+
+# Highlight regions that cross the threshold
+anomalous_regions_indices = [i for i, region in enumerate(z_scores.index) if region in anomalous_regions]
+for i in anomalous_regions_indices:
+    ax.bar(z_scores.index, z_scores.iloc[:, i], color='red', alpha=0.7, label=f'Region {i}')
+
+# Add a horizontal dotted line at the threshold
+ax.axhline(y=threshold, color='black', linestyle='--', label='Threshold')
+
+# Rotate x-axis labels for better readability
+plt.xticks(rotation=90)
+
+# Set labels and title
+ax.set_xlabel('Regions')
+ax.set_ylabel('Z-Scores')
+ax.set_title('Z-Scores for Military Spending Anomaly Detection')
+
+# Adjust the legend to avoid duplicate labels
+handles, labels = plt.gca().get_legend_handles_labels()
+by_label = dict(zip(labels, handles))
+plt.legend(by_label.values(), by_label.keys())
+
+# Display the plot
+plt.show()
+
+
+
+import pandas as pd
+import numpy as np
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+
+# Load the Excel file with multiple worksheets
+xls = pd.ExcelFile(r'D:\Projects\datathon23\datasets\Military_Expenditure_by_ountry.xlsx')
+
+# Define a list of columns to include or exclude
+columns_to_skip = ["Notes", "2019 Current"]  # Replace with the actual column names you want to skip
+
+# Read the Excel file and skip specified rows and columns
+df = pd.read_excel(xls, sheet_name="Constant (2018) USD", skiprows=5, usecols=lambda x: x not in columns_to_skip)
+
+# Drop the second column from the DataFrame
+df = df.drop(df.columns[1], axis=1)
+
+# Extract the columns with military spending data (years)
+military_spending_data = df.iloc[:, 1:]
+
+# Convert feature names (column names) to strings
+military_spending_data.columns = military_spending_data.columns.astype(str)
+
+# Replace non-numeric values with NaN
+military_spending_data = military_spending_data.apply(pd.to_numeric, errors='coerce')
+
+# Perform data preprocessing, if necessary (e.g., handling missing values, scaling)
+
+# Standardize the data (important for K-Means)
+scaler = StandardScaler()
+military_spending_data_scaled = scaler.fit_transform(military_spending_data)
+
+from sklearn.impute import SimpleImputer
+
+# Create a SimpleImputer to impute NaN values with the mean of each column
+imputer = SimpleImputer(strategy='mean')
+
+# Impute the NaN values
+military_spending_data_imputed = imputer.fit_transform(military_spending_data_scaled)
+
+# Determine the optimal number of clusters using the Elbow method
+wcss = []
+for i in range(1, 11):
+    kmeans = KMeans(n_clusters=i, init='k-means++', max_iter=300, n_init=10, random_state=0)
+    kmeans.fit(military_spending_data_imputed)
+    wcss.append(kmeans.inertia_)
+
+# Plot the Elbow method results
+plt.plot(range(1, 11), wcss)
+plt.title('Elbow Method')
+plt.xlabel('Number of clusters')
+plt.ylabel('WCSS')  # Within-Cluster Sum of Squares
+plt.show()
+
+# Choose an appropriate number of clusters based on the Elbow method results
+# For example, you can set n_clusters = 3 if the 'elbow' of the plot is around 3
+
+# Perform K-Means clustering
+n_clusters = 2  # You can change this based on the Elbow method result
+
+# Create an imputer that replaces NaNs with the mean value of the column
+imputer = SimpleImputer(missing_values=np.nan, strategy='mean')
+
+# Perform imputation on the scaled data
+military_spending_data_scaled_imputed = imputer.fit_transform(military_spending_data_scaled)
+
+# Perform K-Means clustering
+n_clusters = 2  # You can change this based on the Elbow method result
+kmeans = KMeans(n_clusters=n_clusters, init='k-means++', max_iter=300, n_init=10, random_state=0)
+cluster_labels = kmeans.fit_predict(military_spending_data_scaled_imputed)
+
+
+# Add the cluster labels to the DataFrame
+df['Cluster'] = cluster_labels
+
+# Now, df contains the original data with an additional 'Cluster' column indicating the cluster for each region
+# You can analyze and visualize the clusters as needed
+
+"""
+In K-Means clustering, the Within-Cluster-Sum-of-Squares (WCSS) is a measure of the variability or dispersion of data points within the clusters. It is an important metric used to determine the optimal number of clusters in K-Means.
+
+When you plot the WCSS for different values of k (the number of clusters), you often observe a curve that starts high and decreases as k increases, forming an "elbow" shape. The "elbow" point in the curve is typically where you should choose the number of clusters.
+
+At the beginning of the curve (small k values), adding more clusters reduces the WCSS significantly. This is because each data point is closer to the centroids, leading to smaller within-cluster variations.
+
+As you increase k, the reduction in WCSS becomes less pronounced, and the curve starts to bend. The "elbow" point is where the rate of reduction sharply changes or levels off. This point represents a good trade-off between the number of clusters and the compactness of the clusters.
+
+Selecting the number of clusters at the "elbow" point is a common heuristic for determining the optimal number of clusters. However, the choice of the exact number of clusters can still be somewhat subjective and may require domain knowledge and additional analysis.
+
+So, when you see a curve with an "elbow" shape, it suggests that the point where the curve starts to bend is a reasonable choice for the number of clusters that effectively represent the underlying structure of your data.
+"""
+
+cluster_0_data = df[df['Cluster'] == 0]
+cluster_1_data = df[df['Cluster'] == 1]
+
+# Replace non-numeric values with NaN
+df = df.replace('. .', np.nan)
+
+# Now, create a scatter plot for all clusters
+cluster_labels = [0, 1]  # Replace with the cluster labels you have
+colors = ['red', 'blue']  # You can choose different colors for each cluster
+labels = ['USA', 'Rest of the World']
+
+plt.figure(figsize=(10, 6))
+
+for i, cluster_label in enumerate(cluster_labels):
+    cluster_data = df[df['Cluster'] == cluster_label]
+    years = df.columns[1:-1]  # Assuming the year columns are from the second column to the third-to-last column
+    spending_values = cluster_data.iloc[0, 1:-1]  # Assuming you want to plot the first row of each cluster
+    # Set the point size. Use a larger size for the cluster with fewer points.
+    point_size = 10000 if len(cluster_data) < 2 else 20
+    plt.scatter(years, spending_values, label=f'Cluster {cluster_label}: {labels[i]}', color=colors[i])
+
+plt.title('Cluster Demarcation')
+plt.xlabel('Years')
+plt.ylabel('Military Spending')
+plt.legend()
+plt.show()
