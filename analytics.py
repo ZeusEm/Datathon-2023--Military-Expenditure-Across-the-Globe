@@ -1421,3 +1421,35 @@ plt.xlabel('Years')
 plt.ylabel('Military Spending')
 plt.legend()
 plt.show()
+
+
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Load the Excel file with multiple worksheets
+xls = pd.ExcelFile(r'D:\Projects\datathon23\datasets\Military_Expenditure_by_ountry.xlsx')
+
+# Define a list of columns to include or exclude
+columns_to_skip = ["Notes"]  # Replace with the actual column names you want to skip
+
+# Read the Excel file and skip specified rows, columns, and the last 8 rows
+df = pd.read_excel(xls, sheet_name="Share of GDP", skiprows=5, usecols=lambda x: x not in columns_to_skip, skipfooter=8)
+
+df.iloc[:, 1:] = df.iloc[:, 1:].apply(pd.to_numeric, errors='coerce')
+
+# Extract data for India and USA
+india_data = df[df['Country'] == 'India']
+usa_data = df[df['Country'] == 'USA']
+
+# Create a plot for India and USA
+plt.figure(figsize=(12, 6))
+plt.plot(india_data.columns[1:], india_data.values[0][1:], label='India', marker='o')
+plt.plot(usa_data.columns[1:], usa_data.values[0][1:], label='USA', marker='o')
+plt.xlabel('Year')
+plt.ylabel('Military Expenditure (% of GDP)')
+plt.title('Military Expenditure of India and USA (1949-2019)')
+plt.legend()
+plt.grid(True)
+plt.show()
