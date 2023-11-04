@@ -1453,3 +1453,127 @@ plt.title('Military Expenditure of India and USA (1949-2019)')
 plt.legend()
 plt.grid(True)
 plt.show()
+
+
+
+# plot health expenditure and military expenditure (per capita) with the population in the background as bar graph
+import pandas as pd
+import numpy as np
+
+# Load the excel file for per capita military expenditure by country data
+xls = pd.ExcelFile(r'D:\Projects\datathon23\datasets\Military_Expenditure_by_ountry.xlsx')
+
+# Define a list of columns to include or exclude
+columns_to_skip = ["Notes"]  # Replace with the actual column names you want to skip
+
+# Read the Excel file and skip specified rows, columns, and the last 8 rows
+df_military = pd.read_excel(xls, sheet_name="Per capita", skiprows=6, usecols=lambda x: x not in columns_to_skip, skipfooter=7)
+
+# Replace non-numeric values with NaN
+df_military = df_military.replace('. .', np.nan)
+
+df_military.iloc[:, 1:] = df_military.iloc[:, 1:].apply(pd.to_numeric, errors='coerce')
+
+# Load the excel file for per capita military expenditure by country data
+xls = pd.ExcelFile(r'D:\Projects\datathon23\datasets\external\WHO_Global_Health_Expenditure.xlsx')
+
+# Define a list of columns to include or exclude
+columns_to_skip = ["Country Code", "Indicator Name", "Indicator Code"]  # Replace with the actual column names you want to skip
+
+# Read the Excel file and skip specified rows, columns, and the last 8 rows
+df_health = pd.read_excel(xls, sheet_name="Data", skiprows=3, usecols=lambda x: x not in columns_to_skip, skipfooter=2)
+
+# Discard columns between 1960 and 2000
+df_health = df_health.drop(df_health.loc[:, '1960':'2000'], axis=1)
+
+# Discard the rightmost 2 columns
+df_health = df_health.iloc[:, :-2]
+
+# Load the excel file for per capita military expenditure by country data
+xls = pd.ExcelFile(r'D:\Projects\datathon23\datasets\external\IMF_World_Economic_Outlook_Database.xlsx')
+
+# Define a list of columns to include or exclude
+columns_to_skip = ["Subject Notes", "Units", "Scale", "Country/Series-specific Notes"]  # Replace with the actual column names you want to skip
+
+# Read the Excel file and skip specified rows, columns, and the last 8 rows
+df_population = pd.read_excel(xls, sheet_name="IMF_World_Economic_Outlook_Data", usecols=lambda x: x not in columns_to_skip, skipfooter=2)
+
+# Filter the rows where "Subject Descriptor" is "Population"
+df_population = df_population[df_population["Subject Descriptor"] == "Population"]
+
+# Drop the "Subject Descriptor" column
+df_population = df_population.drop("Subject Descriptor", axis=1)
+
+# Discard the rightmost 1 columns
+df_population = df_population.iloc[:, :-1]
+
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
+
+# Specify the countries you want to plot
+countries = ["China", "Afghanistan", "Bangladesh", "India", "Nepal", "Pakistan", "Sri Lanka", "Myanmar"]
+
+# Create a figure and axis
+fig, ax1 = plt.subplots(figsize=(12, 6))
+
+# Create a color map for distinguishing lines of different countries
+colors = plt.cm.get_cmap("tab10", len(countries))
+
+# Create lists to store legend handles and labels
+legend_handles = []
+legend_labels = []
+
+# Plot per capita health expenditure data for each country
+for i, country in enumerate(countries):
+    if country in df_health["Country Name"].values:
+        health_data = df_health[df_health["Country Name"] == country].values[0][1:]
+        years = df_health.columns[1:].astype(int)  # Extract years as integers
+        line, = ax1.plot(years, health_data, label=country + " (Health)", color=colors(i))
+        if country == "India":
+            line.set_linewidth(5)  # Increase line width for India
+        legend_handles.append(line)
+        legend_labels.append("Health (Solid) - " + country)
+
+# Create a second y-axis for per capita military expenditure
+ax2 = ax1.twinx()
+
+for i, country in enumerate(countries):
+    if country in df_military["Country"].values:
+        military_data = df_military[df_military["Country"] == country].values[0][13:33]  # Select the relevant years
+        line, = ax2.plot(years, military_data, label=country + " (Military)", linestyle="--", color=colors(i))
+        if country == "India":
+            line.set_linewidth(5)  # Increase line width for India
+        legend_handles.append(line)
+        legend_labels.append("Military (Dotted) - " + country)
+
+# Create a third y-axis for population
+ax3 = ax1.twinx()
+
+for i, country in enumerate(countries):
+    if country in df_population["Country"].values:
+        population_data = df_population[df_population["Country"] == country].values[0][13:33]  # Select the relevant years
+        line, = ax3.plot(years, population_data, label=country + " (Population)", linestyle="-.", color=colors(i))
+        if country == "India":
+            line.set_linewidth(5)  # Increase line width for India
+        legend_handles.append(line)
+        legend_labels.append("Population (Dashed) - " + country)
+
+# Customize the plot
+ax1.set_xlabel("Year")
+ax1.set_ylabel("Per Capita Military/Health Expenditure", labelpad=15)
+ax2.set_ylabel("")  # Remove right y-axis label
+
+# Show the legend with custom entries for different line styles
+ax1.legend(legend_handles, legend_labels, loc="upper left")
+
+# Remove right y-axis ticks and labels (except for population)
+ax2.set_yticks([])
+
+ax2.set_ylabel("Population", labelpad=40)
+ax1.xaxis.set_major_locator(MaxNLocator(integer=True))  # Set the x-axis to display integers only
+
+plt.title("Per Capita Military/Health Expenditure and Population by Country")
+
+# Show the plot
+plt.tight_layout()
+plt.show()
