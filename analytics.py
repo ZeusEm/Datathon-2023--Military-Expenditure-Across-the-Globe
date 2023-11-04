@@ -1577,3 +1577,90 @@ plt.title("Per Capita Military/Health Expenditure and Population by Country")
 # Show the plot
 plt.tight_layout()
 plt.show()
+
+
+
+
+
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Load the excel file for per capita military expenditure by country data
+xls = pd.ExcelFile(r'D:\Projects\datathon23\datasets\external\IMF_World_Economic_Outlook_Database.xlsx')
+
+# Define a list of columns to include or exclude
+columns_to_skip = ["Subject Notes", "Units", "Scale", "Country/Series-specific Notes"]  # Replace with the actual column names you want to skip
+
+# Read the Excel file and skip specified rows, columns, and the last 8 rows
+df_inflation = pd.read_excel(xls, sheet_name="IMF_World_Economic_Outlook_Data", usecols=lambda x: x not in columns_to_skip, skipfooter=2)
+
+# Filter the rows where "Subject Descriptor" is "Inflation, average consumer prices"
+df_inflation = df_inflation[df_inflation["Subject Descriptor"] == "Inflation, average consumer prices"]
+
+# Drop the "Subject Descriptor" column
+df_inflation = df_inflation.drop("Subject Descriptor", axis=1)
+
+# Discard the rightmost 1 columns
+df_inflation = df_inflation.iloc[:, :-1]  # Exclude the first and last columns
+
+# Load the excel file for per capita military expenditure by country data
+xls = pd.ExcelFile(r'D:\Projects\datathon23\datasets\external\IMF_World_Economic_Outlook_Database.xlsx')
+
+# Define a list of columns to include or exclude
+columns_to_skip = ["Subject Notes", "Units", "Scale", "Country/Series-specific Notes"]  # Replace with the actual column names you want to skip
+
+# Read the Excel file and skip specified rows, columns, and the last 8 rows
+df_unemployment = pd.read_excel(xls, sheet_name="IMF_World_Economic_Outlook_Data", usecols=lambda x: x not in columns_to_skip, skipfooter=2)
+
+# Filter the rows where "Subject Descriptor" is "Population"
+df_unemployment = df_unemployment[df_unemployment["Subject Descriptor"] == "Unemployment rate"]
+
+# Drop the "Subject Descriptor" column
+df_unemployment = df_unemployment.drop("Subject Descriptor", axis=1)
+
+# Discard the rightmost 1 columns
+df_unemployment = df_unemployment.iloc[:, :-1]  # Exclude the first and last columns
+
+# Load the excel file for per capita military expenditure by country data
+xls = pd.ExcelFile(r'D:\Projects\datathon23\datasets\Military_Expenditure_by_ountry.xlsx')
+
+# Define a list of columns to include or exclude
+columns_to_skip = ["Notes", "Reporting year"]  # Replace with the actual column names you want to skip
+
+# Read the Excel file and skip specified rows, columns, and the last 8 rows
+df_military = pd.read_excel(xls, sheet_name="Share of Govt. spending", skiprows=7, usecols=lambda x: x not in columns_to_skip, skipfooter=7)
+
+# Replace non-numeric values with NaN
+df_military = df_military.replace('. .', np.nan)
+
+df_military.iloc[:, 1:] = df_military.iloc[:, 1:].apply(pd.to_numeric, errors='coerce')
+
+# Define a function to create a correlation heatmap with better labels
+def create_correlation_heatmap(data1, data2, title, cmap, label1, label2):
+    # Join the dataframes on the "Country" column
+    merged_data = data1.merge(data2, on="Country", suffixes=("_" + label1, "_" + label2))
+    
+    # Select only numeric columns for correlation calculation
+    numeric_data = merged_data.select_dtypes(include=[np.number])
+    
+    corr = numeric_data.corr()
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(corr, annot=True, fmt=".2f", cmap=cmap)
+    plt.title(title)
+    plt.xlabel(label1)
+    plt.ylabel(label2)
+    # Customize x and y axis labels
+    ax = plt.gca()
+    ax.set_xticklabels([label.get_text().split('_')[0] for label in ax.get_xticklabels()])
+    ax.set_yticklabels([label.get_text().split('_')[0] for label in ax.get_yticklabels()])
+    plt.show()
+
+# Create a correlation heatmap for Share of government spending on military vs. Inflation
+create_correlation_heatmap(df_military, df_inflation, "Correlation Heatmap - Military vs. Inflation", "viridis",
+                           "Military Spending Share", "Inflation")
+
+# Create a correlation heatmap for Share of government spending on military vs. Unemployment rate
+create_correlation_heatmap(df_military, df_unemployment, "Correlation Heatmap - Military vs. Unemployment", "plasma",
+                           "Military Spending Share", "Unemployment Rate")
